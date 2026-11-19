@@ -34,3 +34,8 @@
    - Added dependency version auto-adaptation step in CI to sync vendored patch versions when upstream dependencies update.
    - Added run pruning step with `actions: write` using standard `GITHUB_TOKEN` to remove old testing runs while preserving the latest successful run (`948e0bd`).
    - Zero custom secret keys or personal access tokens embedded in repository or workflow.
+
+7. **Default Branch Alignment with Upstream (`master`)**:
+   - Aligned local and remote default branch to `master` matching upstream standard.
+   - Synced latest commits and pushed force update to `origin/master`.
+   - Set GitHub repository default branch to `master`.
