@@ -29,3 +29,8 @@
    - Updated `Cargo.toml` `[profile.release-lto]` with `opt-level = 3`, `codegen-units = 1`, `lto = "thin"`, `panic = "abort"`, and `strip = true`.
    - Updated `.github/workflows/android-release.yml` to build with `--profile release-lto` (`e080ca4`).
    - Run 12 completed successfully in 7m 25s, outputting 37.3 MB zipped artifact.
+
+6. **Workflow Auto-Adaptation and Run Pruning**:
+   - Added dependency version auto-adaptation step in CI to sync vendored patch versions when upstream dependencies update.
+   - Added run pruning step with `actions: write` using standard `GITHUB_TOKEN` to remove old testing runs while preserving the latest successful run (`948e0bd`).
+   - Zero custom secret keys or personal access tokens embedded in repository or workflow.
