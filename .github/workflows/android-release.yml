@@ -53,15 +53,19 @@ jobs:
           sudo apt-get install -y clang llvm libclang-dev
 
       - name: Build Jcode arm64
-        env:
-          CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: ${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang
-          CARGO_TARGET_AARCH64_LINUX_ANDROID_AR: ${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
-          CC_aarch64_linux_android: ${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang
-          CXX_aarch64_linux_android: ${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang++
-          AR_aarch64_linux_android: ${{ env.ANDROID_NDK_HOME }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
         run: |
-          cargo build --release --target aarch64-linux-android --bin jcode
-          $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip --strip-all target/aarch64-linux-android/release/jcode
+          TOOLCHAIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64
+          export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$TOOLCHAIN/bin/aarch64-linux-android24-clang
+          export CARGO_TARGET_AARCH64_LINUX_ANDROID_AR=$TOOLCHAIN/bin/llvm-ar
+          export CC_aarch64_linux_android=$TOOLCHAIN/bin/aarch64-linux-android24-clang
+          export CXX_aarch64_linux_android=$TOOLCHAIN/bin/aarch64-linux-android24-clang++
+          export AR_aarch64_linux_android=$TOOLCHAIN/bin/llvm-ar
+          export LIBCLANG_PATH=/usr/lib/llvm-18/lib:/usr/lib/llvm-16/lib:/usr/lib/llvm-14/lib
+          export BINDGEN_EXTRA_CLANG_ARGS="--target=aarch64-linux-android24"
+          echo "Using NDK Toolchain at: $TOOLCHAIN"
+          ls -la $TOOLCHAIN/bin/aarch64-linux-android24-clang
+          cargo build --release --target aarch64-linux-android --bin jcode --verbose
+          $TOOLCHAIN/bin/llvm-strip --strip-all target/aarch64-linux-android/release/jcode
           mkdir -p dist
           cp target/aarch64-linux-android/release/jcode dist/jcode-arm64-v8a
 
