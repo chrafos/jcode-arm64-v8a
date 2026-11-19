@@ -54,18 +54,30 @@ jobs:
 
       - name: Build Jcode arm64
         run: |
-          TOOLCHAIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64
-          export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$TOOLCHAIN/bin/aarch64-linux-android24-clang
-          export CARGO_TARGET_AARCH64_LINUX_ANDROID_AR=$TOOLCHAIN/bin/llvm-ar
-          export CC_aarch64_linux_android=$TOOLCHAIN/bin/aarch64-linux-android24-clang
-          export CXX_aarch64_linux_android=$TOOLCHAIN/bin/aarch64-linux-android24-clang++
-          export AR_aarch64_linux_android=$TOOLCHAIN/bin/llvm-ar
+          set -x
+          echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
+          echo "ANDROID_NDK_ROOT: $ANDROID_NDK_ROOT"
+          NDK_DIR="${ANDROID_NDK_HOME:-$ANDROID_NDK_ROOT}"
+          if [ -z "$NDK_DIR" ] || [ ! -d "$NDK_DIR" ]; then
+            echo "Searching for NDK..."
+            find /usr/local/lib/android -name "toolchains" 2>/dev/null || true
+            find /opt -name "toolchains" 2>/dev/null || true
+            exit 1
+          fi
+          TOOLCHAIN="$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64"
+          echo "TOOLCHAIN dir: $TOOLCHAIN"
+          ls -la "$TOOLCHAIN/bin" | head -n 30 || true
+
+          export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$TOOLCHAIN/bin/aarch64-linux-android24-clang"
+          export CARGO_TARGET_AARCH64_LINUX_ANDROID_AR="$TOOLCHAIN/bin/llvm-ar"
+          export CC_aarch64_linux_android="$TOOLCHAIN/bin/aarch64-linux-android24-clang"
+          export CXX_aarch64_linux_android="$TOOLCHAIN/bin/aarch64-linux-android24-clang++"
+          export AR_aarch64_linux_android="$TOOLCHAIN/bin/llvm-ar"
           export LIBCLANG_PATH=/usr/lib/llvm-18/lib:/usr/lib/llvm-16/lib:/usr/lib/llvm-14/lib
           export BINDGEN_EXTRA_CLANG_ARGS="--target=aarch64-linux-android24"
-          echo "Using NDK Toolchain at: $TOOLCHAIN"
-          ls -la $TOOLCHAIN/bin/aarch64-linux-android24-clang
-          cargo build --release --target aarch64-linux-android --bin jcode --verbose
-          $TOOLCHAIN/bin/llvm-strip --strip-all target/aarch64-linux-android/release/jcode
+
+          cargo build --release --target aarch64-linux-android --bin jcode
+          "$TOOLCHAIN/bin/llvm-strip" --strip-all target/aarch64-linux-android/release/jcode
           mkdir -p dist
           cp target/aarch64-linux-android/release/jcode dist/jcode-arm64-v8a
 
