@@ -1,12 +1,5 @@
-# One-Click Local Android Cross-Compiler & Updater for Jcode
+# Local Android Cross-Compiler for Jcode (No auto-pull, manual run only)
 $ErrorActionPreference = "Stop"
-
-Write-Host "==> Checking Git remote & pulling latest..." -ForegroundColor Cyan
-if (Test-Path ".git") {
-    git pull --rebase
-} else {
-    Write-Host "Not a git repo, skipping pull." -ForegroundColor Yellow
-}
 
 $ndkPath = "C:\Users\mocri\Downloads\App\android-ndk-r27"
 if (-not (Test-Path $ndkPath)) {
@@ -18,6 +11,11 @@ $llvmBin = "C:\Program Files\LLVM\bin"
 $env:PATH = "$llvmBin;$ndkPath\toolchains\llvm\prebuilt\windows-x86_64\bin;" + $env:PATH
 $env:LIBCLANG_PATH = $llvmBin
 $env:ANDROID_NDK_HOME = $ndkPath
+$env:CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER = "$ndkPath\toolchains\llvm\prebuilt\windows-x86_64\bin\aarch64-linux-android24-clang.cmd"
+$env:CARGO_TARGET_AARCH64_LINUX_ANDROID_AR = "$ndkPath\toolchains\llvm\prebuilt\windows-x86_64\bin\llvm-ar.exe"
+$env:CC_aarch64_linux_android = "$ndkPath\toolchains\llvm\prebuilt\windows-x86_64\bin\aarch64-linux-android24-clang.cmd"
+$env:CXX_aarch64_linux_android = "$ndkPath\toolchains\llvm\prebuilt\windows-x86_64\bin\aarch64-linux-android24-clang++.cmd"
+$env:AR_aarch64_linux_android = "$ndkPath\toolchains\llvm\prebuilt\windows-x86_64\bin\llvm-ar.exe"
 
 Write-Host "==> Building Jcode for Android arm64-v8a..." -ForegroundColor Cyan
 cargo build --release --target aarch64-linux-android --bin jcode
