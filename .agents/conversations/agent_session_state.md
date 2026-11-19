@@ -35,7 +35,11 @@
    - Added run pruning step with `actions: write` using standard `GITHUB_TOKEN` to remove old testing runs while preserving the latest successful run (`948e0bd`).
    - Zero custom secret keys or personal access tokens embedded in repository or workflow.
 
-7. **Default Branch Alignment with Upstream (`master`)**:
-   - Aligned local and remote default branch to `master` matching upstream standard.
-   - Synced latest commits and pushed force update to `origin/master`.
-   - Set GitHub repository default branch to `master`.
+7. **Default Branch Alignment & Single Branch Maintenance**:
+   - Consolidated repository to single branch `master`.
+   - Deleted `main` branch locally and remotely (`git push origin --delete main`).
+   - Preserved Android release workflow (`.github/workflows/android-release.yml`) and patches on `master`.
+
+8. **Local Build Cleanup**:
+   - Cleaned intermediate build artifacts (`target/`, `dist/`, `job.log`).
+   - Reclaimed ~12.5 GB disk space while preserving source code and config.
