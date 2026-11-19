@@ -53,39 +53,30 @@ jobs:
           sudo apt-get install -y clang llvm libclang-dev
 
       - name: Build Jcode arm64
+        env:
+          CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: /usr/local/lib/android/sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang
+          CC_aarch64_linux_android: /usr/local/lib/android/sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang
+          CXX_aarch64_linux_android: /usr/local/lib/android/sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang++
+          AR_aarch64_linux_android: /usr/local/lib/android/sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar
         run: |
           set -x
-          echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
-          echo "ANDROID_NDK_ROOT: $ANDROID_NDK_ROOT"
-          NDK_DIR="${ANDROID_NDK_HOME:-$ANDROID_NDK_ROOT}"
-          if [ -z "$NDK_DIR" ] || [ ! -d "$NDK_DIR" ]; then
-            echo "Searching for NDK..."
-            find /usr/local/lib/android -name "toolchains" 2>/dev/null || true
-            find /opt -name "toolchains" 2>/dev/null || true
-            exit 1
+          TOOLCHAIN="$(find /usr/local/lib/android -name "aarch64-linux-android24-clang" -printf '%h\n' | head -n 1)"
+          if [ -z "$TOOLCHAIN" ]; then
+            TOOLCHAIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
           fi
-          TOOLCHAIN="$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64"
-          echo "TOOLCHAIN dir: $TOOLCHAIN"
+          echo "Discovered toolchain bin: $TOOLCHAIN"
 
-          export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$TOOLCHAIN/bin/aarch64-linux-android24-clang"
-          export CARGO_TARGET_AARCH64_LINUX_ANDROID_AR="$TOOLCHAIN/bin/llvm-ar"
-          export CC_aarch64_linux_android="$TOOLCHAIN/bin/aarch64-linux-android24-clang"
-          export CXX_aarch64_linux_android="$TOOLCHAIN/bin/aarch64-linux-android24-clang++"
-          export AR_aarch64_linux_android="$TOOLCHAIN/bin/llvm-ar"
+          export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$TOOLCHAIN/aarch64-linux-android24-clang"
+          export CARGO_TARGET_AARCH64_LINUX_ANDROID_AR="$TOOLCHAIN/llvm-ar"
+          export CC_aarch64_linux_android="$TOOLCHAIN/aarch64-linux-android24-clang"
+          export CXX_aarch64_linux_android="$TOOLCHAIN/aarch64-linux-android24-clang++"
+          export AR_aarch64_linux_android="$TOOLCHAIN/llvm-ar"
           export LIBCLANG_PATH=/usr/lib/llvm-18/lib:/usr/lib/llvm-16/lib:/usr/lib/llvm-14/lib
           export BINDGEN_EXTRA_CLANG_ARGS="--target=aarch64-linux-android24"
 
-          # Run cargo and save log to file
-          cargo build --release --target aarch64-linux-android --bin jcode > cargo_build.log 2>&1 || BUILD_FAILED=1
+          cargo build --release --target aarch64-linux-android --bin jcode
 
-          if [ "$BUILD_FAILED" = "1" ]; then
-            echo "==================== CARGO BUILD FAILED ===================="
-            tail -n 100 cargo_build.log
-            echo "============================================================"
-            exit 1
-          fi
-
-          "$TOOLCHAIN/bin/llvm-strip" --strip-all target/aarch64-linux-android/release/jcode
+          "$TOOLCHAIN/llvm-strip" --strip-all target/aarch64-linux-android/release/jcode
           mkdir -p dist
           cp target/aarch64-linux-android/release/jcode dist/jcode-arm64-v8a
 
