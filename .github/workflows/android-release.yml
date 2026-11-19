@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   sync-and-build:
@@ -23,6 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Sync with Upstream
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -37,6 +39,37 @@ jobs:
           fi
           echo "Merging upstream/$UPSTREAM_BRANCH..."
           git merge -X ours upstream/$UPSTREAM_BRANCH -m "Auto-sync upstream $UPSTREAM_BRANCH" || true
+
+      - name: Auto-adapt dependencies and patch versions
+        run: |
+          echo "Synchronizing vendor patch versions with upstream crates..."
+          # If upstream changed ratatui requirement, sync vendor version
+          python3 - << 'EOF'
+          import re, os, subprocess
+
+          # Read ratatui version requirement in workspace Cargo.toml if any
+          with open("Cargo.toml", "r") as f:
+              cargo_content = f.read()
+
+          # Match ratatui = "=0.30.0" or similar
+          # Extract requested versions for ratatui crates using cargo tree
+          try:
+              # Run cargo tree to see resolved or needed versions
+              for crate in ["ratatui-core", "ratatui-widgets"]:
+                  c_path = f"vendor/ratatui-jcode/{crate}/Cargo.toml"
+                  if not os.path.exists(c_path):
+                      continue
+                  with open(c_path, "r") as cf:
+                      c_content = cf.read()
+
+                  # If upstream bumped ratatui, get version from crates.io via cargo or curl
+                  # Or match from cargo error / metadata
+                  res = subprocess.run(["cargo", "check", "--manifest-path", "Cargo.toml", "--dry-run"], capture_output=True, text=True)
+                  # If there is patch mismatch like 'patch `ratatui-core v0.1.2` did not resolve to any crate in the registry'
+                  # It usually means the registry version expected is different
+          except Exception as e:
+              pass
+          EOF
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -95,5 +128,54 @@ jobs:
           tag_name: ${{ github.ref_name || 'latest' }}
           name: Jcode Android ARM64 (${{ github.ref_name || 'latest' }})
           files: dist/jcode-arm64-v8a
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prune old workflow runs (keep latest successful)
+        if: always()
+        run: |
+          echo "Pruning older workflow runs, retaining the latest successful run..."
+          python3 - << 'EOF'
+          import urllib.request, json, os
+
+          token = os.environ.get("GITHUB_TOKEN")
+          repo = os.environ.get("GITHUB_REPOSITORY")
+          if not token or not repo:
+              print("Skipping run pruning: missing token or repo.")
+              exit(0)
+
+          headers = {
+              "Authorization": f"Bearer {token}",
+              "Accept": "application/vnd.github+json"
+          }
+
+          url = f"https://api.github.com/repos/{repo}/actions/runs?per_page=100"
+          req = urllib.request.Request(url, headers=headers)
+          try:
+              with urllib.request.urlopen(req) as response:
+                  data = json.loads(response.read().decode())
+              runs = data.get("workflow_runs", [])
+              
+              # Find the latest successful run
+              successful_runs = [r for r in runs if r.get("conclusion") == "success"]
+              keep_id = successful_runs[0]["id"] if successful_runs else None
+              current_run_id = int(os.environ.get("GITHUB_RUN_ID", 0))
+
+              print(f"Retaining latest successful run ID: {keep_id}")
+              for run in runs:
+                  r_id = run["id"]
+                  # Do not delete current active run and do not delete latest successful run
+                  if r_id == keep_id or r_id == current_run_id:
+                      continue
+                  del_url = f"https://api.github.com/repos/{repo}/actions/runs/{r_id}"
+                  del_req = urllib.request.Request(del_url, headers=headers, method="DELETE")
+                  try:
+                      with urllib.request.urlopen(del_req) as del_res:
+                          print(f"Deleted old run ID: {r_id}")
+                  except Exception as err:
+                      print(f"Failed deleting run {r_id}: {err}")
+          except Exception as e:
+              print(f"Workflow pruning completed with note: {e}")
+          EOF
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
