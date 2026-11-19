@@ -2,8 +2,8 @@ name: Sync Upstream & Build Android arm64
 
 on:
   schedule:
-    # Run daily at 00:00 UTC
-    - cron: '0 0 * * *'
+    # Run bi-weekly (every 1st and 15th of the month at 00:00 UTC)
+    - cron: '0 0 1,15 * *'
   workflow_dispatch:
   push:
     branches:
