@@ -76,11 +76,11 @@ jobs:
           echo "Linker target path: $CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER"
           ls -la "$CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER"
 
-          cargo build --release --target aarch64-linux-android --bin jcode
+          cargo build --profile release-lto --target aarch64-linux-android --bin jcode
 
-          "$TOOLCHAIN/bin/llvm-strip" --strip-all target/aarch64-linux-android/release/jcode
+          "$TOOLCHAIN/bin/llvm-strip" --strip-all target/aarch64-linux-android/release-lto/jcode
           mkdir -p dist
-          cp target/aarch64-linux-android/release/jcode dist/jcode-arm64-v8a
+          cp target/aarch64-linux-android/release-lto/jcode dist/jcode-arm64-v8a
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
