@@ -16,7 +16,7 @@ autobenches = false
 edition = "2024"
 rust-version = "1.86.0"
 name = "ratatui-core"
-version = "0.1.0"
+version = "0.1.2"
 authors = [
     "Florian Dehau <work@fdehau.com>",
     "The Ratatui Developers",
