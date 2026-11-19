@@ -66,7 +66,6 @@ jobs:
           fi
           TOOLCHAIN="$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64"
           echo "TOOLCHAIN dir: $TOOLCHAIN"
-          ls -la "$TOOLCHAIN/bin" | head -n 30 || true
 
           export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$TOOLCHAIN/bin/aarch64-linux-android24-clang"
           export CARGO_TARGET_AARCH64_LINUX_ANDROID_AR="$TOOLCHAIN/bin/llvm-ar"
@@ -76,7 +75,16 @@ jobs:
           export LIBCLANG_PATH=/usr/lib/llvm-18/lib:/usr/lib/llvm-16/lib:/usr/lib/llvm-14/lib
           export BINDGEN_EXTRA_CLANG_ARGS="--target=aarch64-linux-android24"
 
-          cargo build --release --target aarch64-linux-android --bin jcode
+          # Run cargo and save log to file
+          cargo build --release --target aarch64-linux-android --bin jcode > cargo_build.log 2>&1 || BUILD_FAILED=1
+
+          if [ "$BUILD_FAILED" = "1" ]; then
+            echo "==================== CARGO BUILD FAILED ===================="
+            tail -n 100 cargo_build.log
+            echo "============================================================"
+            exit 1
+          fi
+
           "$TOOLCHAIN/bin/llvm-strip" --strip-all target/aarch64-linux-android/release/jcode
           mkdir -p dist
           cp target/aarch64-linux-android/release/jcode dist/jcode-arm64-v8a
