@@ -1,0 +1,10 @@
+[target.aarch64-linux-android]
+linker = "C:\\Users\\mocri\\Downloads\\App\\android-ndk-r27\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\aarch64-linux-android24-clang.cmd"
+ar = "C:\\Users\\mocri\\Downloads\\App\\android-ndk-r27\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-ar.exe"
+
+[env]
+CC_aarch64_linux_android = "C:\\Users\\mocri\\Downloads\\App\\android-ndk-r27\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\aarch64-linux-android24-clang.cmd"
+CXX_aarch64_linux_android = "C:\\Users\\mocri\\Downloads\\App\\android-ndk-r27\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\aarch64-linux-android24-clang++.cmd"
+AR_aarch64_linux_android = "C:\\Users\\mocri\\Downloads\\App\\android-ndk-r27\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-ar.exe"
+ANDROID_NDK_HOME = "C:\\Users\\mocri\\Downloads\\App\\android-ndk-r27"
+LIBCLANG_PATH = "C:\\Program Files\\LLVM\\bin"
